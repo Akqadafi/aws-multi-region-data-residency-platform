@@ -131,7 +131,7 @@ This design demonstrates a layered approach:
 
 ## Architecture Diagram
 
-![AWS Multi Region Data Residency Platform](diagrams/aws_multi_region_data_residency_diagram.png)
+![AWS Multi Region Data Residency Platform](diagram/tokyosaopaulotunnel.png)
 
 ## Terraform Design
 
