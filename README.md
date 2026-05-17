@@ -1,101 +1,256 @@
-# Lab 3 — Cross-Region Compute, Tokyo Data Residency, and Audit Evidence
+# aws-multi-region-data-residency-platform
+
+A Terraform-based AWS multi-region platform that separates global application access from authoritative data storage by running compute in São Paulo while preserving database residency in Tokyo.
 
 ## Overview
 
-Lab 3 is the most advanced project in this portfolio. It combines runtime architecture, cross-region networking, and audit-style validation.
+`aws-multi-region-data-residency-platform` is a portfolio project built around a controlled multi-region AWS architecture for data residency, cross-region compute, edge security, and audit-ready evidence.
 
-The design keeps authoritative storage in **Tokyo** while allowing application compute in **São Paulo**, connected through a controlled Transit Gateway corridor. The lab then proves the design through runtime checks, route validation, WAF and CloudFront evidence, and CloudTrail-based change history.
+The platform keeps authoritative database storage in Tokyo (`ap-northeast-1`) while allowing application compute to run in São Paulo (`sa-east-1`). The two regions are connected through a deliberate Transit Gateway peering corridor, allowing the compute region to reach the data region without duplicating the database outside Tokyo.
 
-## Objectives
+This project goes beyond simple infrastructure provisioning. In addition to VPCs, routing, EC2, RDS, and Transit Gateway peering, it includes:
 
-* keep database storage in Tokyo
-* run application compute in São Paulo without duplicating the database there
-* connect the two regions through a controlled TGW peering corridor
-* prove that São Paulo can reach the Tokyo database at both the network and app level
-* document the environment in a way that would make sense to an auditor or reviewer
+- Tokyo-only database residency validation
+- São Paulo compute-only deployment
+- controlled cross-region TGW routing
+- CloudFront edge access
+- AWS WAF inspection and logging
+- direct-origin protection for the ALB
+- CloudTrail management-event evidence
+- S3-based log and audit storage
+- screenshot indexes, proof files, and auditor-facing documentation
 
-## Region Roles
+The result is a more realistic cloud engineering project: not just multi-region deployment, but also runtime validation, security evidence, and audit explanation.
 
-### Tokyo (`ap-northeast-1`)
+## Core Platform Capabilities
 
-Tokyo is the **authoritative region**.
+This repository is organized around four platform capabilities.
 
-It contains:
+## 1. Data Residency and Regional Separation
 
-* the primary VPC for the storage side of the design
-* the RDS database
-* a TGW participating in the cross-region corridor
-* the infrastructure outputs São Paulo consumes through remote state
+Focuses on keeping authoritative application data in Tokyo while allowing compute to run in a separate AWS region.
 
-### São Paulo (`sa-east-1`)
+Includes:
 
-São Paulo is the **compute-only region**.
+- authoritative RDS MySQL database in Tokyo
+- no duplicate RDS instance in São Paulo
+- Tokyo as the source-of-truth data region
+- São Paulo as a compute-only region
+- CLI evidence proving database presence in Tokyo and absence in São Paulo
+- documentation explaining the data-residency boundary
 
-It contains:
+## 2. Cross-Region Network Corridor
 
-* the application EC2 instance
-* a VPC peered into the Tokyo corridor through TGW
-* route and security-group logic needed to reach Tokyo storage
-* no duplicate RDS instance
+Focuses on controlled private connectivity between the compute region and the data region.
+
+Includes:
+
+- Tokyo Transit Gateway
+- São Paulo Transit Gateway
+- cross-region TGW peering attachment
+- route-table entries for remote CIDR blocks
+- security-group rules allowing MySQL traffic over the corridor
+- network validation from São Paulo EC2 to Tokyo RDS on port `3306`
+- application-level proof that São Paulo can write to and read from the Tokyo database
+
+## 3. Edge Security and Origin Protection
+
+Focuses on controlled public access to the application.
+
+Includes:
+
+- Route 53 public DNS
+- CloudFront as the public edge layer
+- AWS WAF attached to CloudFront
+- WAF logging to CloudWatch Logs
+- CloudFront standard logs delivered to S3
+- ALB origin protection
+- security group hardening so direct public ALB access is closed
+
+## 4. Audit Evidence and Operational Validation
+
+Focuses on proving that the architecture can be reviewed, explained, and defended.
+
+Includes:
+
+- CloudTrail management-event history
+- evidence for security group changes
+- evidence for TGW peering and route creation
+- evidence for WAF association and logging configuration
+- evidence for CloudFront distribution updates
+- S3 log and audit bucket validation
+- versioning and encryption checks
+- CloudTrail log validation
+- auditor narrative and verification reports
+
+## What This Project Builds
+
+At a high level, this project provisions and validates:
+
+- a Tokyo VPC for the authoritative data region
+- a São Paulo VPC for the compute region
+- private RDS MySQL in Tokyo
+- EC2 application compute in São Paulo
+- Transit Gateways in both regions
+- cross-region TGW peering
+- route-table logic for both regional CIDR blocks
+- security-group rules for controlled MySQL access
+- CloudFront public edge access
+- AWS WAF inspection and logging
+- ALB origin protection
+- CloudTrail-based change tracking
+- S3-backed log and audit evidence storage
+- verification reports, screenshots, and proof files
 
 ## Architecture Summary
 
-At a high level, the design works like this:
+This project uses a global-access / regional-storage architecture.
 
-* Tokyo hosts the database and acts as the authoritative storage region
-* São Paulo hosts application compute only
-* a TGW peering attachment creates the legal and technical corridor between regions
-* route tables in both regions explicitly send remote CIDRs through TGW
-* São Paulo reaches the Tokyo database over that corridor
-* public edge traffic is supported by CloudFront and WAF
-* CloudTrail, S3 logging, and validation evidence support auditability
+Public users enter through Route 53, CloudFront, and AWS WAF. CloudFront provides the public edge, while WAF evaluates and logs request traffic. Direct public access to the ALB origin is closed so traffic is forced through the intended edge path.
 
-## Lab 3A vs Lab 3B
+Tokyo acts as the authoritative data region. The RDS database remains in Tokyo and is not duplicated in São Paulo.
 
-This lab naturally splits into two parts.
+São Paulo acts as the compute region. Application compute can run there, but it reaches the Tokyo database only through the controlled Transit Gateway corridor.
 
-### Lab 3A — Runtime / Infrastructure Wiring Proof
+The cross-region path is explicit:
 
-Lab 3A focuses on whether the architecture actually works.
+- São Paulo VPC routes Tokyo CIDR traffic toward the São Paulo TGW
+- São Paulo TGW sends that traffic through the TGW peering attachment
+- Tokyo TGW receives the traffic and routes it toward the Tokyo VPC
+- Tokyo security groups allow MySQL traffic from the São Paulo CIDR
+- the application validates the path by writing and reading database records
 
-Key proof items:
+This design demonstrates a layered approach:
 
-* São Paulo EC2 can reach Tokyo RDS on port 3306
-* São Paulo app can submit a record
-* Tokyo app can read that same record
-* each region’s route tables include the remote CIDR pointing to TGW
-* Tokyo exports infrastructure outputs that São Paulo consumes via remote state
+- public access is controlled at the edge
+- storage remains in the authoritative region
+- compute can operate cross-region without duplicating the database
+- private routing is deliberate and reviewable
+- changes are traceable through CloudTrail
+- logs and screenshots support audit review
 
-### Lab 3B — Audit / Regulator-Style Proof
+## Architecture Diagram
 
-Lab 3B focuses on whether the environment can be explained and defended through evidence.
+![AWS Multi Region Data Residency Platform](diagrams/aws_multi_region_data_residency_diagram.png)
 
-Key proof items:
+## Terraform Design
 
-* Tokyo-only database residency
-* CloudFront edge behavior
-* WAF deployment and WAF log evidence
-* CloudTrail “who changed what” evidence
-* S3 log retention, encryption, versioning, and CloudTrail log validation
-* architecture summary, proof files, evidence JSON, and auditor narrative
+The infrastructure is organized into reusable Terraform modules and regional environments.
 
-## What This Lab Demonstrates
+Major module areas include:
 
-This lab demonstrates that I can:
+- `network`
+- `network_spoke`
+- `security`
+- `security_spoke`
+- `iam`
+- `database`
+- `app_ec2`
+- `endpoints`
+- `monitoring`
+- `incident_reporter`
 
-* design across multiple AWS regions with clear role separation
-* preserve data residency while still enabling cross-region application access
-* build and validate TGW-based routing rather than ad hoc connectivity
-* reason about runtime proof and audit proof as separate but connected deliverables
-* create evidence that supports technical claims with screenshots, CLI output, and written validation files
+The regional environments are separated into:
 
-```
+- `Terraform/environments/tokyo`
+- `Terraform/environments/saopaulo`
 
-## Why It Matters
+This makes the platform easier to reason about because each region has a clear role. Tokyo owns the authoritative data layer. São Paulo owns compute-side access. Shared modules provide the reusable building blocks.
 
-Lab 3 is important because it shows more than deployment. It shows design intent, control boundaries, runtime validation, and evidence discipline. It combines cloud engineering, security posture, and technical documentation in a way that is much closer to real-world review and audit expectations.
+## Validation and Evidence
 
-## Key Takeaway
+This repository includes evidence that the platform was not just defined in Terraform, but actually validated.
 
-Lab 3 shows my ability to build a cross-region AWS architecture that preserves Tokyo as the authoritative storage region, enables São Paulo application access through a controlled TGW corridor, and backs every major claim with audit-style evidence.
+## Data Residency Validation
+
+Evidence demonstrates that:
+
+- the RDS instance exists in Tokyo
+- the Tokyo RDS endpoint is active
+- São Paulo has no RDS instance
+- the authoritative database is not duplicated outside Japan
+
+This supports the central data-residency claim of the project.
+
+## Cross-Region Connectivity Validation
+
+Evidence demonstrates that:
+
+- Tokyo and São Paulo TGWs are available
+- the TGW peering attachment is available
+- route tables in both regions contain explicit remote CIDR routes
+- São Paulo EC2 can reach Tokyo RDS on port `3306`
+- the São Paulo application can insert a database record
+- the Tokyo path can read the same record back
+
+This proves the cross-region corridor works at both the network layer and the application layer.
+
+## Edge and Origin Protection Validation
+
+Evidence demonstrates that:
+
+- public traffic reaches CloudFront
+- CloudFront response headers are present
+- WAF is attached to the edge path
+- WAF logs contain real request events
+- direct public access to the ALB origin is closed
+- the ALB security group no longer allows broad public ingress
+
+This proves that public traffic is controlled through the intended edge layer.
+
+## Audit and Change Validation
+
+Evidence demonstrates that CloudTrail recorded:
+
+- security group changes
+- TGW peering creation
+- TGW peering acceptance
+- TGW route creation
+- WAF association
+- WAF logging configuration
+- CloudFront distribution updates
+- logging delivery configuration
+
+This creates a management-event history that explains who changed important parts of the environment, when the changes happened, and which AWS APIs were involved.
+
+## Repository Structure
+
+```text
+.
+├── README.md
+├── docs/
+│   └── incidents/
+├── evidence/
+│   ├── cross-region-connectivity/
+│   │   ├── Screenshots/
+│   │   ├── screenshots-index.md
+│   │   └── verification-report.md
+│   └── data-residency-and-audit/
+│       ├── 00_architecture-summary.md
+│       ├── 01_data-residency-proof.md
+│       ├── 02_edge-proof-cloudfront.md
+│       ├── 03_waf-proof.md
+│       ├── 04_cloudtrail-change-proof.md
+│       ├── 05_network-corridor-proof.md
+│       ├── auditor-narrative.md
+│       ├── screenshots-index.md
+│       └── verification-report.md
+├── scripts/
+│   ├── collect.sh
+│   └── python/
+└── Terraform/
+    ├── environments/
+    │   ├── tokyo/
+    │   └── saopaulo/
+    └── modules/
+        ├── app_ec2/
+        ├── database/
+        ├── endpoints/
+        ├── iam/
+        ├── incident_reporter/
+        ├── monitoring/
+        ├── network/
+        ├── network_spoke/
+        ├── security/
+        └── security_spoke/
 
