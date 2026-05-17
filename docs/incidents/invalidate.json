@@ -1,0 +1,7 @@
+{
+  "Paths": {
+    "Quantity": 1,
+    "Items": ["/static/example.txt"]
+  },
+  "CallerReference": "invalidate-static-example-$(date +%s)"
+}

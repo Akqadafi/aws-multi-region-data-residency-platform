@@ -1,0 +1,37 @@
+
+Terraform used the selected providers to generate the following execution
+plan. Resource actions are indicated with the following symbols:
+  [32m+[0m create[0m
+
+Terraform will perform the following actions:
+
+[1m  # aws_ec2_transit_gateway_peering_attachment_accepter.liberdade_accept_peer01[0m will be created
+[0m  [32m+[0m[0m resource "aws_ec2_transit_gateway_peering_attachment_accepter" "liberdade_accept_peer01" {
+      [32m+[0m[0m id                            = (known after apply)
+      [32m+[0m[0m peer_account_id               = (known after apply)
+      [32m+[0m[0m peer_region                   = (known after apply)
+      [32m+[0m[0m peer_transit_gateway_id       = (known after apply)
+      [32m+[0m[0m tags                          = {
+          [32m+[0m[0m "Name" = "liberdade-accept-peer01"
+        }
+      [32m+[0m[0m tags_all                      = {
+          [32m+[0m[0m "Name" = "liberdade-accept-peer01"
+        }
+      [32m+[0m[0m transit_gateway_attachment_id = "tgw-attach-087be19171b508a2f"
+      [32m+[0m[0m transit_gateway_id            = (known after apply)
+    }
+
+[1m  # aws_route.liberdade_to_tokyo_route01[0m will be created
+[0m  [32m+[0m[0m resource "aws_route" "liberdade_to_tokyo_route01" {
+      [32m+[0m[0m destination_cidr_block = "10.10.0.0/16"
+      [32m+[0m[0m id                     = (known after apply)
+      [32m+[0m[0m instance_id            = (known after apply)
+      [32m+[0m[0m instance_owner_id      = (known after apply)
+      [32m+[0m[0m network_interface_id   = (known after apply)
+      [32m+[0m[0m origin                 = (known after apply)
+      [32m+[0m[0m route_table_id         = "rtb-008eee8f71fd72312"
+      [32m+[0m[0m state                  = (known after apply)
+      [32m+[0m[0m transit_gateway_id     = "tgw-07cf5b59d76c3556c"
+    }
+
+[1mPlan:[0m [0m2 to add, 0 to change, 0 to destroy.
