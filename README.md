@@ -220,7 +220,7 @@ This creates a management-event history that explains who changed important part
 ├── README.md
 ├── docs/
 │   └── incidents/
-├── evidence/
+├── proof of concept/
 │   ├── cross-region-connectivity/
 │   │   ├── Screenshots/
 │   │   ├── screenshots-index.md
